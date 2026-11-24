@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "topic": "Python venv",
+    "note": "Har project ke liye alag virtual environment use karo."
+  },
+  {
+    "id": 2,
+    "topic": "Git ignore",
+    "note": ".env aur local db files ko repository mein push na karo."
+  }
+]

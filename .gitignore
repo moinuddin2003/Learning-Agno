@@ -1,2 +1,25 @@
-/.env
-/venv
+# Environment variables & API keys
+.env
+.env.*
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache & build files
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local vector DB & SQLite files
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
