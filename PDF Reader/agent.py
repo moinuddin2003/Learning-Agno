@@ -17,6 +17,8 @@ load_dotenv()
 
 api_key = os.getenv("GROQ_API_KEY")
 
+PDF_PATH = r"C:\Users\Xolva-01\Downloads\ThaiRecipes.pdf"
+
 
 LANCEDB_URI = "data/lancedb"
 
@@ -26,9 +28,13 @@ CONTENTS_DB_FILE = os.path.join(BASE_DIR, "knowledge_contents.db")
 
 
 reader = PDFReader(
-    chunking_strategy=RecursiveChunking(chunk_size=800, overlap=80),
+    chunking_strategy=RecursiveChunking(chunk_size=500, overlap=75),
     split_on_pages=True,
 )
+
+def custom_retriever(query: str, agent=None, num_documents: int = 5, **kwargs):
+    docs = knowledge.search(query=query, max_results= 5)
+    return [doc.to_dict() for doc in docs]
 
 knowledge = Knowledge(
     vector_db=LanceDb(
@@ -38,16 +44,17 @@ knowledge = Knowledge(
         embedder=OllamaEmbedder(id="nomic-embed-text", dimensions=768),
     ),
     contents_db=SqliteDb(db_file=CONTENTS_DB_FILE),
-    readers=reader,
 )
 
 
 agent = Agent(
     model=Groq(id="openai/gpt-oss-120b", api_key=api_key),
-    search_knowledge=True,
     knowledge=knowledge,
+    knowledge_retriever=custom_retriever,
+    search_knowledge=True,
+    add_knowledge_to_context=True,
     instructions=[
-        "Always search the knowledge base before answering SQL questions.",
+        "Always search the knowledge base before answering any questions.",
         "Answer only from the retrieved  information.",
         "If the Question is not in the knowledge base, say so.",
     ],
@@ -58,15 +65,22 @@ agent = Agent(
 
 if __name__ == "__main__":
     set_log_level_to_debug()
-    documents = reader.read(pdf=r"C:\Users\Xolva-01\Downloads\SQL_Questions.pdf")
-    # (pdf=r"D:\AI_Training\Adeel\RecipeBook_WinterSoups_2022_Digital.pdf")
-    text = "\n\n".join(d.content for d in documents if getattr(d, "content", None))
-    print(text)
+    # documents = reader.read(PDF_PATH)
+    # # (pdf=r"D:\AI_Training\Adeel\RecipeBook_WinterSoups_2022_Digital.pdf")
+    # text = "\n\n".join(d.content for d in documents if getattr(d, "content", None))
+    # for i, doc in enumerate(documents):
+    #     content = getattr(doc, "content", "") or ""
+    #     print(
+    #         f"\n--- Chunk {i + 1} | Len: {len(content)} | Meta: {getattr(doc, 'meta_data', {})} ---"
+    #     )
+    # print(content[:200])
     knowledge.insert(
-        path=r"C:\Users\Xolva-01\Downloads\SQL_Questions.pdf",
+        name="Thai Recipes",
+        path=PDF_PATH,
+        reader=reader,
         skip_if_exists=True,
     )
 
     print("pdf process done")
 
-    agent.print_response("Get the Top 3 Highest-Paid Employees (Google)", stream=True)
+    agent.print_response("Receipe for Pad Thai?", stream=True)
